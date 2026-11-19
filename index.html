@@ -1,0 +1,957 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Z3ZUSU - Neon Chaos</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: #08051c;
+    color: white;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+    user-select: none;
+}
+
+canvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+}
+
+.screen {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    padding: 20px;
+    background:
+        radial-gradient(circle at 20% 20%, #8024b9 0%, transparent 35%),
+        radial-gradient(circle at 80% 80%, #1748a9 0%, transparent 40%),
+        linear-gradient(140deg, #100523, #071b38);
+    z-index: 10;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.logo {
+    font-size: clamp(60px, 12vw, 120px);
+    font-weight: 1000;
+    letter-spacing: 8px;
+    background: linear-gradient(
+        90deg,
+        #ff36bd,
+        #fff05b,
+        #39ffe2,
+        #a34aff,
+        #ff36bd
+    );
+    background-size: 300%;
+    color: transparent;
+    background-clip: text;
+    -webkit-background-clip: text;
+    animation: rainbow 4s linear infinite;
+    filter: drop-shadow(0 0 20px #c13bff);
+}
+
+@keyframes rainbow {
+    to { background-position: 300%; }
+}
+
+.subtitle {
+    font-size: 22px;
+    color: #c5a7ff;
+    letter-spacing: 7px;
+    margin: 8px;
+}
+
+.developer {
+    color: #a9eaff;
+    margin: 20px;
+    font-size: 17px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 15px #28d9ff;
+}
+
+button {
+    border: none;
+    color: white;
+    font-size: 21px;
+    font-weight: bold;
+    padding: 17px 48px;
+    border-radius: 18px;
+    margin: 10px;
+    cursor: pointer;
+    background: linear-gradient(100deg, #ff29bd, #783cff);
+    box-shadow: 0 0 25px #b12cff;
+    transition: .2s;
+}
+
+button:hover {
+    transform: scale(1.08);
+    box-shadow: 0 0 40px #ff29bd;
+}
+
+button:active {
+    transform: scale(.94);
+}
+
+.secondary {
+    background: linear-gradient(100deg, #137dff, #13d5c8);
+}
+
+.description {
+    color: #d6c7ff;
+    line-height: 2;
+    margin-top: 20px;
+}
+
+#hud {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    display: flex;
+    justify-content: space-between;
+    z-index: 5;
+    pointer-events: none;
+    gap: 8px;
+}
+
+.hud-box {
+    background: #150a35dd;
+    border: 1px solid #b64fff;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-weight: bold;
+}
+
+#pauseButton {
+    position: fixed;
+    right: 12px;
+    top: 65px;
+    z-index: 6;
+    padding: 10px 18px;
+    font-size: 15px;
+}
+
+#message {
+    position: fixed;
+    top: 40%;
+    width: 100%;
+    text-align: center;
+    font-size: 35px;
+    font-weight: 900;
+    color: #fff16b;
+    text-shadow: 0 0 20px #ff31c9;
+    pointer-events: none;
+    z-index: 6;
+}
+
+#mobile {
+    position: fixed;
+    bottom: 15px;
+    left: 0;
+    right: 0;
+    display: none;
+    justify-content: space-around;
+    z-index: 7;
+}
+
+#mobile button {
+    padding: 15px 22px;
+    font-size: 25px;
+    background: #762bffaa;
+}
+
+@media (pointer: coarse) {
+    #mobile { display: flex; }
+}
+
+.small {
+    font-size: 15px;
+    color: #bba8ef;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="game"></canvas>
+
+<div id="hud" class="hidden">
+    <div class="hud-box">⭐ <span id="score">0</span></div>
+    <div class="hud-box">💎 <span id="gems">0</span></div>
+    <div class="hud-box">🏆 LEVEL <span id="level">1</span></div>
+</div>
+
+<button id="pauseButton" class="hidden"
+onclick="pauseGame()">Ⅱ PAUSE</button>
+
+<div id="message"></div>
+
+<!-- HAUPTMENÜ -->
+
+<div id="menu" class="screen">
+    <div class="logo">Z3ZUSU</div>
+    <div class="subtitle">NEON CHAOS</div>
+
+    <div class="developer">
+        Entwickelt von John##
+    </div>
+
+    <p style="color:#ffe9ff;margin:15px">
+        ✨ DAS ULTIMATIVE ARCADE-ABENTEUER ✨
+    </p>
+
+    <button onclick="startGame()">▶ START</button>
+
+    <button class="secondary"
+    onclick="showHelp()">SPIELANLEITUNG</button>
+
+    <div class="description">
+        💎 Sammle Kristalle<br>
+        ⚡ Entdecke Power-ups<br>
+        🚀 Schaffe neue Level<br>
+        🏆 Knacke deinen Rekord
+    </div>
+
+    <p class="small" style="margin-top:20px">
+        Version 1.0 • Z3ZUSU Studios
+    </p>
+</div>
+
+<!-- SPIELANLEITUNG -->
+
+<div id="help" class="screen hidden">
+    <h1 style="font-size:45px;color:#ff5be1">
+        SPIELANLEITUNG
+    </h1>
+
+    <div class="description">
+        🟣 Du steuerst einen Neon-Würfel.<br><br>
+        ⬅️ Nach links bewegen<br>
+        ➡️ Nach rechts bewegen<br>
+        ⬆️ Springen<br><br>
+        💎 Sammle Kristalle.<br>
+        ⚡ Sammle besondere Power-ups.<br>
+        🚧 Vermeide die Hindernisse.<br>
+        ⭐ Sammle möglichst viele Punkte!
+    </div>
+
+    <button onclick="hideHelp()">ZURÜCK</button>
+</div>
+
+<!-- PAUSE -->
+
+<div id="pause" class="screen hidden">
+    <h1 style="font-size:60px;color:#b35aff">
+        PAUSE
+    </h1>
+    <p style="margin:20px">Dein Abenteuer wartet!</p>
+    <button onclick="resumeGame()">WEITER</button>
+    <button class="secondary" onclick="mainMenu()">MENÜ</button>
+</div>
+
+<!-- GAME OVER -->
+
+<div id="gameOver" class="screen hidden">
+    <h1 style="font-size:55px;color:#ff46c7">
+        GAME OVER!
+    </h1>
+
+    <p style="margin:15px">DEIN ERGEBNIS</p>
+
+    <div id="finalScore"
+    style="font-size:65px;color:#ffe95c;font-weight:bold">
+        0
+    </div>
+
+    <p id="best" style="margin:15px;color:#7ffff0"></p>
+
+    <button onclick="startGame()">NOCHMAL 🔄</button>
+    <button class="secondary" onclick="mainMenu()">HAUPTMENÜ</button>
+</div>
+
+<div id="mobile">
+    <button id="left">◀</button>
+    <button id="jump">⬆</button>
+    <button id="right">▶</button>
+</div>
+
+<script>
+
+/* =========================================
+   Z3ZUSU - NEON CHAOS
+   Entwickelt von John##
+========================================= */
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let W, H, DPR;
+
+function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth;
+    H = window.innerHeight;
+
+    canvas.width = W * DPR;
+    canvas.height = H * DPR;
+
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+
+window.addEventListener("resize", resize);
+resize();
+
+/* =========================================
+   ELEMENTE
+========================================= */
+
+const $ = id => document.getElementById(id);
+
+let state = "menu";
+
+let score = 0;
+let gems = 0;
+let level = 1;
+let bestScore = Number(
+    localStorage.getItem("z3zusuBest") || 0
+);
+
+let frame = 0;
+let speed = 5;
+let shake = 0;
+let combo = 0;
+let comboTimer = 0;
+
+let player;
+let obstacles = [];
+let crystals = [];
+let powerups = [];
+let particles = [];
+let stars = [];
+let decorations = [];
+let floatingTexts = [];
+
+let shield = 0;
+let magnet = 0;
+let doublePoints = 0;
+let invincible = 0;
+
+let keys = {
+    left: false,
+    right: false,
+    jump: false
+};
+
+const colors = [
+    "#ff42d0",
+    "#ffdd45",
+    "#43f8ff",
+    "#a85bff",
+    "#5cff90",
+    "#ff7652"
+];
+
+/* =========================================
+   HINTERGRUND
+========================================= */
+
+function createStars() {
+    stars = [];
+
+    for (let i = 0; i < 120; i++) {
+        stars.push({
+            x: Math.random() * W,
+            y: Math.random() * H,
+            r: Math.random() * 2.5 + .5,
+            speed: Math.random() * 2 + .3,
+            alpha: Math.random()
+        });
+    }
+
+    decorations = [];
+
+    for (let i = 0; i < 20; i++) {
+        decorations.push({
+            x: Math.random() * W,
+            y: Math.random() * H,
+            size: 15 + Math.random() * 40,
+            color: colors[i % colors.length]
+        });
+    }
+}
+
+function background() {
+    let gradient = ctx.createLinearGradient(0, 0, 0, H);
+
+    gradient.addColorStop(0, "#12082c");
+    gradient.addColorStop(.5, "#201044");
+    gradient.addColorStop(1, "#090b27");
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, W, H);
+
+    stars.forEach(s => {
+        s.x -= s.speed * (state === "playing" ? speed / 4 : .3);
+
+        if (s.x < 0) {
+            s.x = W;
+            s.y = Math.random() * H;
+        }
+
+        ctx.globalAlpha = s.alpha;
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    ctx.globalAlpha = 1;
+
+    decorations.forEach(d => {
+        ctx.globalAlpha = .09;
+        ctx.strokeStyle = d.color;
+        ctx.lineWidth = 2;
+
+        ctx.beginPath();
+        ctx.arc(
+            d.x,
+            d.y,
+            d.size + Math.sin(frame * .02 + d.x) * 5,
+            0,
+            Math.PI * 2
+        );
+        ctx.stroke();
+    });
+
+    ctx.globalAlpha = 1;
+
+    drawGrid();
+}
+
+function drawGrid() {
+    ctx.strokeStyle = "#a73cff18";
+    ctx.lineWidth = 1;
+
+    let offset = (frame * speed) % 45;
+
+    for (let x = 0; x < W; x += 45) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, H);
+        ctx.stroke();
+    }
+
+    for (let y = offset; y < H; y += 45) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(W, y);
+        ctx.stroke();
+    }
+}
+
+/* =========================================
+   SPIELER
+========================================= */
+
+function createPlayer() {
+    player = {
+        x: W * .2,
+        y: H * .6,
+        w: 42,
+        h: 42,
+        vy: 0,
+        grounded: false,
+        rotation: 0
+    };
+}
+
+function drawPlayer() {
+    if (!player) return;
+
+    ctx.save();
+
+    ctx.translate(
+        player.x + player.w / 2,
+        player.y + player.h / 2
+    );
+
+    ctx.rotate(player.rotation);
+
+    if (shield > 0) {
+        ctx.strokeStyle = "#42faff";
+        ctx.lineWidth = 4;
+        ctx.shadowBlur = 25;
+        ctx.shadowColor = "#42faff";
+
+        ctx.beginPath();
+        ctx.arc(0, 0, 36, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+
+    if (invincible > 0 && frame % 8 < 4) {
+        ctx.globalAlpha = .35;
+    }
+
+    ctx.shadowBlur = 25;
+    ctx.shadowColor = "#db39ff";
+
+    let gradient = ctx.createLinearGradient(-20, -20, 20, 20);
+    gradient.addColorStop(0, "#ff5adf");
+    gradient.addColorStop(1, "#7835ff");
+
+    ctx.fillStyle = gradient;
+
+    roundRect(
+        ctx,
+        -player.w / 2,
+        -player.h / 2,
+        player.w,
+        player.h,
+        10
+    );
+
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "#ffffff";
+
+    ctx.fillRect(-10, -7, 6, 6);
+    ctx.fillRect(5, -7, 6, 6);
+
+    ctx.fillStyle = "#321052";
+    ctx.fillRect(-7, 8, 14, 4);
+
+    ctx.restore();
+}
+
+/* =========================================
+   ZEICHENFUNKTIONEN
+========================================= */
+
+function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, r);
+}
+
+function drawCrystal(x, y, size, rotation) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rotation);
+
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = "#42faff";
+
+    ctx.fillStyle = "#49f8ff";
+
+    ctx.beginPath();
+    ctx.moveTo(0, -size);
+    ctx.lineTo(size * .7, -size * .2);
+    ctx.lineTo(size * .5, size);
+    ctx.lineTo(-size * .5, size);
+    ctx.lineTo(-size * .7, -size * .2);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = "#ffffff88";
+    ctx.beginPath();
+    ctx.moveTo(0, -size);
+    ctx.lineTo(0, size);
+    ctx.lineTo(-size * .7, -size * .2);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
+}
+
+function drawObstacle(o) {
+    ctx.save();
+
+    ctx.shadowBlur = 18;
+    ctx.shadowColor = o.color;
+    ctx.fillStyle = o.color;
+
+    if (o.type === "spike") {
+        ctx.beginPath();
+        ctx.moveTo(o.x, o.y + o.h);
+        ctx.lineTo(o.x + o.w / 2, o.y);
+        ctx.lineTo(o.x + o.w, o.y + o.h);
+        ctx.closePath();
+        ctx.fill();
+    } else if (o.type === "laser") {
+        ctx.fillRect(o.x, o.y, o.w, o.h);
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(o.x, o.y, o.w, o.h);
+    } else {
+        roundRect(ctx, o.x, o.y, o.w, o.h, 7);
+        ctx.fill();
+        ctx.fillStyle = "#ffffff88";
+        ctx.fillRect(o.x + 5, o.y + 5, o.w - 10, 4);
+    }
+
+    ctx.restore();
+}
+
+function drawPowerup(p) {
+    ctx.save();
+
+    ctx.shadowBlur = 25;
+    ctx.shadowColor = p.color;
+    ctx.fillStyle = p.color;
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 15, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 18px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(p.symbol, p.x, p.y);
+
+    ctx.restore();
+}
+
+/* =========================================
+   PARTICLES
+========================================= */
+
+function particlesAt(x, y, color, amount = 15) {
+    for (let i = 0; i < amount; i++) {
+        let angle = Math.random() * Math.PI * 2;
+        let velocity = Math.random() * 6 + 1;
+
+        particles.push({
+            x,
+            y,
+            vx: Math.cos(angle) * velocity,
+            vy: Math.sin(angle) * velocity,
+            life: 35 + Math.random() * 25,
+            maxLife: 60,
+            size: Math.random() * 6 + 2,
+            color
+        });
+    }
+}
+
+function updateParticles() {
+    particles.forEach((p, i) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += .08;
+        p.life--;
+
+        ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+
+        if (p.life <= 0) particles.splice(i, 1);
+    });
+
+    ctx.globalAlpha = 1;
+}
+
+/* =========================================
+   TEXT-EFFEKTE
+========================================= */
+
+function floatingText(text, x, y, color) {
+    floatingTexts.push({
+        text,
+        x,
+        y,
+        life: 55,
+        color
+    });
+}
+
+function updateFloatingTexts() {
+    floatingTexts.forEach((t, i) => {
+        t.y -= 1;
+        t.life--;
+
+        ctx.globalAlpha = t.life / 55;
+        ctx.fillStyle = t.color;
+        ctx.font = "bold 20px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(t.text, t.x, t.y);
+
+        if (t.life <= 0) floatingTexts.splice(i, 1);
+    });
+
+    ctx.globalAlpha = 1;
+}
+
+/* =========================================
+   HINDERNISSE
+========================================= */
+
+let obstacleTimer = 0;
+
+function spawnObstacle() {
+    const types = ["block", "spike", "laser"];
+    const type = types[Math.floor(Math.random() * types.length)];
+
+    let w = type === "laser" ? 18 : 38;
+    let h = type === "spike" ? 38 :
+            type === "laser" ? 100 : 42;
+
+    let y = type === "laser"
+        ? H - 140 - Math.random() * 130
+        : H - 95 - h;
+
+    obstacles.push({
+        x: W + 40,
+        y,
+        w,
+        h,
+        type,
+        color: colors[Math.floor(Math.random() * colors.length)]
+    });
+}
+
+function updateObstacles() {
+    obstacleTimer--;
+
+    if (obstacleTimer <= 0) {
+        spawnObstacle();
+        obstacleTimer = Math.max(45, 100 - level * 3);
+    }
+
+    obstacles.forEach((o, i) => {
+        o.x -= speed;
+
+        drawObstacle(o);
+
+        if (
+            player.x + 7 < o.x + o.w &&
+            player.x + player.w - 7 > o.x &&
+            player.y + 7 < o.y + o.h &&
+            player.y + player.h - 7 > o.y
+        ) {
+            if (shield > 0) {
+                shield = 0;
+                particlesAt(o.x, o.y, "#42faff", 25);
+                obstacles.splice(i, 1);
+                floatingText("SHIELD!", player.x, player.y, "#42faff");
+                return;
+            }
+
+            if (invincible <= 0) {
+                gameOver();
+                return;
+            }
+        }
+
+        if (o.x + o.w < 0) {
+            obstacles.splice(i, 1);
+            score += 5;
+        }
+    });
+}
+
+/* =========================================
+   KRISTALLE
+========================================= */
+
+let crystalTimer = 0;
+
+function spawnCrystal() {
+    crystals.push({
+        x: W + 30,
+        y: H - 150 - Math.random() * 180,
+        size: 13,
+        rotation: 0,
+        color: "#4afaff"
+    });
+}
+
+function updateCrystals() {
+    crystalTimer--;
+
+    if (crystalTimer <= 0) {
+        spawnCrystal();
+        crystalTimer = 45 + Math.random() * 40;
+    }
+
+    crystals.forEach((c, i) => {
+        c.x -= speed;
+        c.rotation += .05;
+
+        if (magnet > 0) {
+            let dx = player.x - c.x;
+            let dy = player.y - c.y;
+            let distance = Math.hypot(dx, dy);
+
+            if (distance < 200) {
+                c.x += dx * .07;
+                c.y += dy * .07;
+            }
+        }
+
+        drawCrystal(c.x, c.y, c.size, c.rotation);
+
+        let distance = Math.hypot(
+            player.x + player.w / 2 - c.x,
+            player.y + player.h / 2 - c.y
+        );
+
+        if (distance < 35) {
+            gems++;
+            score += doublePoints > 0 ? 40 : 20;
+            combo++;
+            comboTimer = 100;
+
+            particlesAt(c.x, c.y, "#42faff", 12);
+
+            floatingText("+20", c.x, c.y, "#7affff");
+
+            if (combo >= 5) {
+                score += 100;
+                floatingText("MEGA COMBO!", c.x, c.y - 30, "#ffe74d");
+                combo = 0;
+            }
+
+            crystals.splice(i, 1);
+            updateHUD();
+        } else if (c.x < -30) {
+            crystals.splice(i, 1);
+        }
+    });
+}
+
+/* =========================================
+   POWER-UPS
+========================================= */
+
+let powerTimer = 0;
+
+const powerTypes = [
+    { type: "shield", symbol: "S", color: "#40eaff" },
+    { type: "magnet", symbol: "M", color: "#ff50db" },
+    { type: "double", symbol: "2", color: "#ffe34d" },
+    { type: "slow", symbol: "T", color: "#79ff90" }
+];
+
+function spawnPowerup() {
+    let type = powerTypes[
+        Math.floor(Math.random() * powerTypes.length)
+    ];
+
+    powerups.push({
+        x: W + 30,
+        y: H - 160 - Math.random() * 150,
+        ...type
+    });
+}
+
+function updatePowerups() {
+    powerTimer--;
+
+    if (powerTimer <= 0) {
+        spawnPowerup();
+        powerTimer = 650;
+    }
+
+    powerups.forEach((p, i) => {
+        p.x -= speed;
+        drawPowerup(p);
+
+        if (
+            Math.hypot(
+                player.x + 20 - p.x,
+                player.y + 20 - p.y
+            ) < 40
+        ) {
+            if (p.type === "shield") shield = 600;
+            if (p.type === "magnet") magnet = 600;
+            if (p.type === "double") doublePoints = 600;
+            if (p.type === "slow") slowMotion = 350;
+
+            particlesAt(p.x, p.y, p.color, 25);
+
+            floatingText(
+                p.type.toUpperCase() + "!",
+                p.x,
+                p.y - 20,
+                p.color
+            );
+
+            powerups.splice(i, 1);
+        }
+
+        if (p.x < -30) powerups.splice(i, 1);
+    });
+}
+
+/* =========================================
+   BODEN
+========================================= */
+
+function drawGround() {
+    let y = H - 70;
+
+    ctx.fillStyle = "#25104d";
+    ctx.fillRect(0, y, W, 70);
+
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = "#b62dff";
+    ctx.fillStyle = "#d33dff";
+    ctx.fillRect(0, y, W, 4);
+
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = "#5522a2";
+
+    let offset = (frame * speed) % 40;
+
+    for (let x = -40; x < W + 40; x += 40) {
+        ctx.fillRect(x - offset, y + 20, 20, 3);
+    }
+}
+
+/* =========================================
+   SPIELPHYSIK
+========================================= */
+
+function updatePlayer() {
+    if (keys.left) player.x -= 5;
+    if (keys.right) player.x += 5;
+
+    player.x = Math.max(0, Math.min(W - player.w, player.x));
+
+    if (keys.jump && player.grounded && jumpCooldown <= 0) {
+        player.vy = -13;
+        player.grounded = false;
+        jumpCooldown = 10;
+
+        particlesAt(
+            player.x + 20,
+            player.y + 40,
+            "#d95aff",
+            7
+        );
+    }
+
+    player.vy += .65;
+    player.y += player.vy;
+
+    let groundY = H - 70 - player
